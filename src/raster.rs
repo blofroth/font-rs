@@ -34,6 +34,16 @@ fn recip(x: f32) -> f32 {
     x.recip()
 }
 
+fn clamp(i: i32, width: usize) -> usize {
+  if i < 0 {
+     0
+  } else if i < width as i32 {
+     i as usize
+  } else {
+    width as usize
+  }
+}
+
 impl Raster {
     pub fn new(w: usize, h: usize) -> Raster {
         Raster {
@@ -71,27 +81,27 @@ impl Raster {
             let x1i = x1ceil as i32;
             if x1i <= x0i + 1 {
                 let xmf = 0.5 * (x + xnext) - x0floor;
-                self.a[linestart + x0i as usize] += d - d * xmf;
-                self.a[linestart + (x0i + 1) as usize] += d * xmf;
+                self.a[linestart + clamp(x0i, self.w)] += d - d * xmf;
+                self.a[linestart + clamp(x0i + 1, self.w)] += d * xmf;
             } else {
                 let s = recip(x1 - x0);
                 let x0f = x0 - x0floor;
                 let a0 = 0.5 * s * (1.0 - x0f) * (1.0 - x0f);
                 let x1f = x1 - x1ceil + 1.0;
                 let am = 0.5 * s * x1f * x1f;
-                self.a[linestart + x0i as usize] += d * a0;
+                self.a[linestart + clamp(x0i, self.w)] += d * a0;
                 if x1i == x0i + 2 {
-                    self.a[linestart + (x0i + 1) as usize] += d * (1.0 - a0 - am);
+                    self.a[linestart + clamp(x0i + 1, self.w)] += d * (1.0 - a0 - am);
                 } else {
                     let a1 = s * (1.5 - x0f);
-                    self.a[linestart + (x0i + 1) as usize] += d * (a1 - a0);
-                    for xi in x0i + 2..x1i - 1 {
-                        self.a[linestart + xi as usize] += d * s;
+                    self.a[linestart + clamp(x0i + 1, self.w)] += d * (a1 - a0);
+                    for xi in x0i + 2 .. x1i - 1 {
+                        self.a[linestart + clamp(xi, self.w)] += d * s;
                     }
                     let a2 = a1 + (x1i - x0i - 3) as f32 * s;
-                    self.a[linestart + (x1i - 1) as usize] += d * (1.0 - a2 - am);
+                    self.a[linestart + clamp(x1i - 1, self.w)] += d * (1.0 - a2 - am);
                 }
-                self.a[linestart + x1i as usize] += d * am;
+                self.a[linestart + clamp(x1i, self.w)] += d * am;
             }
             x = xnext;
         }
